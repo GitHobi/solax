@@ -225,7 +225,7 @@ curl "http://www.solax-portal.com/api/v1/site/EnergyTypeColumn/208117?date=2018-
 }
 ```
 
-### ReportType
+### reportType
 
 Value | Type
 ------------ | -------------
@@ -233,3 +233,11 @@ Value | Type
 1 | Consumption
 2 | Balance
 
+### timeType
+
+Value | Type
+------------ | -------------
+0 | Day
+1 | Month
+2 | Year
+3 | Total
