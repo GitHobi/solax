@@ -20,7 +20,8 @@ The "token" is in subsequent calls needed to authenticate.
 ## Retrieve site information:
 
 ```
-$ curl "http://www.solax-portal.com/api/v1/user/SiteList?token=dd754cf8dfb14b3a9249f85fe59eeb6a"
+curl "http://www.solax-portal.com/api/v1/user/SiteList?token=dd754cf8dfb14b3a9249f85fe59eeb6a"
+
 {
     "data": [{
         "id": 108111,
@@ -158,7 +159,7 @@ curl "http://www.solax-portal.com/api/v1/site/InverterList/108111?date=2018-04-2
 ## read data from battery
 
 ```
-$ curl "http://www.solax-portal.com/api/v1/site/BatteryList/108111?date=2018-04-23&token=dd754cf8dfb14b3a9249f85fe59eeb6a"
+curl "http://www.solax-portal.com/api/v1/site/BatteryList/108111?date=2018-04-23&token=dd754cf8dfb14b3a9249f85fe59eeb6a"
 
 {
     "data": [{
