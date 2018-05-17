@@ -199,3 +199,7 @@ curl "http://www.solax-portal.com/api/v1/site/BatteryList/108111?date=2018-04-23
     "message": null
 }
 ```
+
+## access to mobile site
+
+http://www.solax-portal.com/m/home/loginpost
