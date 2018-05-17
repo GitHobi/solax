@@ -1,7 +1,7 @@
 # solax
 Interface to talk to solax hybrid inverter
 
-##Sign on:
+## Sign on:
 
 > curl "http://www.solax-portal.com/api/v1/user/Login?username=USERNAME&password=PASSWORD"
 >
