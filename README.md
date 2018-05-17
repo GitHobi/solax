@@ -203,3 +203,33 @@ curl "http://www.solax-portal.com/api/v1/site/BatteryList/108111?date=2018-04-23
 ## access to mobile site
 
 http://www.solax-portal.com/m/home/loginpost
+
+## get balance
+
+```
+curl "http://www.solax-portal.com/api/v1/site/EnergyTypeColumn/208117?date=2018-05-17&timeType=0&reportType=2&lang=en&token=dd754cf8dfb14b3a9249f85fe59eeb6a"
+
+{
+    "data": [{
+        "name": "Exported energy",
+        "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, null, null, null, null]
+    }, {
+        "name": "Grid Consumption",
+        "data": [0.1, 0, 0.1, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.1, 0, 0, 0.1, 0, 0, 0.1, 0, 0.1, 0.3, null, null, null, null]
+    }],
+    "stacking": "",
+    "timeType": 0,
+    "startTime": "\/Date(1526486400000)\/",
+    "categories": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+    "times": ["2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17", "2018-05-17"]
+}
+```
+
+### ReportType
+
+Value | Type
+------------ | -------------
+0 | Yield
+1 | Consumption
+2 | Balance
+
