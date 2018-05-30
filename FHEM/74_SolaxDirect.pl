@@ -1,0 +1,1 @@
+../../fhem-5.8/FHEM/74_SolaxDirect.pl
