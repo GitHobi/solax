@@ -1,1 +1,0 @@
-../../../../fhem-5.8/www/tablet/js/widget_solax.js
