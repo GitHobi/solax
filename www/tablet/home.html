@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+    
+    <title>Housemonitoring</title>
+ 
+	<link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+	<script>function LC(){}</script>
+	<script src="js/fhem-tablet-ui.js"></script>                                                                                                        
+	
+
+	
+    <link rel="stylesheet" type="text/css" href="/fhem/Solax/lcarssdk.css">
+
+    <link rel="stylesheet" type="text/css" href="/fhem/Solax/theme_ussNotAffiliated.css">
+    
+    <link rel="stylesheet" type="text/css" href="/fhem/Solax/module.css"></head>
+    
+</head>
+
+<body ontouchstart="" onload="">
+
+<div class="wrapper row flexh" id="wpr_viewport">
+    <!--Left Column-->
+   
+   
+    <!--Main Frame-->    
+    <div class="wrapper column flexv flexch" id="wpr_mainView">
+        <!--Header-->    
+        <div class="row header flexh">
+            <!--Header Column-->    
+            <div class="column flexv">
+                <div class="elbow bottom-left bg-glue-4 flexcv default horizontal">
+                    <div class="bar">
+                        <div class="block"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="wrapper flexch flexv">
+                <!--Header Content-->    
+                <div class="wrapper content flexcv">
+                    <div class="title" style="background-color:green">House Monitoring</div>
+					
+					<div class="row frame flexh">
+					<div 
+							class="bar bg-blue-4 step-two hobi"
+							data-type="label"
+							data-device="solax" 
+							data-color="white"
+							data-pre-text="Energie imported: "
+							data-get="grid_imported"
+							data-unit=" KWh"></div>
+							
+						<div
+							class="bar bg-blue-4 step-two hobi"
+							data-type="label"
+							data-pre-text="Energie exported: "
+							data-device="solax" 
+							data-color="white"
+							data-get="grid_exported"
+							data-unit=" KWh"></div>
+				</div>
+						
+                </div>
+				
+				
+                <!--Header Bar Row-->    
+                <div class="row frame flexh">
+					<div class="bar bg-blue-4"></div>
+                    <div class="bar bg-blue-4 flexch"></div>
+                    <div class="bar bg-blue-4"></div>
+                </div>
+            </div>
+        </div>
+		
+        <!--Body-->    
+        <div class="wrapper main flexh flexcv">
+            <!--Body Button Column-->    
+            <div class="wrapper column flexv">
+                <div class="elbow top-left bg-blue-4 step-two default horizontal notClickable">
+                    <div class="bar">
+                        <div class="block"></div>
+                    </div>
+                </div>
+                <a href="home.html"><div class="button color2" data-altLabel="MAIN"></div></a>
+				<a href="pv.html"><div class="button bg-blue-4" data-altLabel="PV"></div></a>
+				<div class="button bg-blue-4" data-altLabel="Heizung"></div>
+				<a href="home.html"><div class="button bg-blue-4" data-altLabel="Sonoff"></div></a>
+				<div class="button bg-blue-4" data-altLabel="Fritzbox"></div>
+                <div class="button bg-blue-4 step-two"></div>
+                <div class="button bg-blue-4 flexcv" data-altLabel="LCARS"></div>
+            </div>
+            <!--Body Bar Row-->    
+            <div class="column flexch flexv">
+                <div class="row flexh frame">
+                    <div class="bar bg-blue-4"></div>
+                    <div class="bar bg-blue-4 flexch"></div>
+                    <div class="bar bg-blue-4"></div>
+                </div>
+                <!--Body Content-->    
+				
+				
+                <div class="wrapper content flexcv hobi" style="overflow:auto;">
+				
+					
+					
+				
+					 <div data-type="highchart" 
+						data-device="Sonoff_2867" data-logdevice="logdb"
+						
+						data-columnspec="Sonoff_2867:ENERGY_Power"
+						data-unitspec=" W"
+						data-height="150"
+						data-width="790"
+						data-tickamount="5"
+						data-linenames="Gefrieschrank Leistungsverbrauch"
+						data-linetypes="area"
+					></div>
+                
+			
+					<div data-type="highchart"  
+						data-device="solar"data-logdevice="logdb"
+						
+						data-columnspec="solax:grid_imported solax:grid_exported"
+						data-daysago="30"
+						data-unitspec=" kWh"
+						data-axislabel="Power"
+						data-height="470"
+						data-width="1000"
+						data-tickamount="10"
+
+						data-yTickInterval="100"
+						data-uaxis="0,0"	
+						data-linenames="Import,Export"
+						data-linetypes="area,area"	
+					></div>
+				   <div class="hobi">Hallo, das ist ein einfacher Test</div>
+				</div>
+				
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

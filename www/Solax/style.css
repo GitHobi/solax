@@ -1,1 +1,27 @@
-../../../fhem-5.8/www/Solax/style.css
+.innerText2 {
+    position: absolute;
+    width: 100%;
+    top: 84px;
+    font-size: 12px;
+    text-align: center;
+    color: #D09421;
+    font-family: arial;
+}
+
+.innerText {
+    position: absolute;
+    width: 100%;
+    top: 66px;
+    font-size: 12px;
+    text-align: center;
+    color: #D09421;
+    font-family: arial;
+}
+
+.red {
+    color: #FF9421;
+}
+
+.green {
+    color: #D0F021;
+}

@@ -1,1 +1,97 @@
-../../../fhem-5.8/www/Solax/default.html
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+<title>Untitled 1</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+
+
+<table>
+<tr>
+<td>hallo</td>
+</tr>
+
+<tr>
+<td>
+
+<div style="background-color:green;display:block; position:relative;width:400px;height:350px;">
+
+	<div style="position:absolute;top:145px;left:150px; background:url(home-load-power.png) no-repeat;background-size:100%;width:100px;height:140px;">
+		<div id="home" class="innerText">104W</div>
+	</div>
+
+	<div style="position:absolute;top:10px;left:150px; background:url(home-pv.png) no-repeat;background-size:100%;width:100px;height:140px;">
+		<div id="solar" class="innerText2">2818W</div>
+	</div>
+
+	<div style="position:absolute;top:195px;left:273px; background:url(home-battery-power4.png) no-repeat;background-size:100%;width:100px;height:140px;">
+		<div id="battery" class="innerText">-155W</div>
+		<div id="batteryPercent" class="innerText green" style="top:80px;font-size:8px;">50%</div>
+	</div>
+
+	<div style="position:absolute;top:195px;left:25px; background:url(home-grid.png) no-repeat;background-size:100%;width:100px;height:140px;">
+		<div id="grid" class="innerText">2623W</div>
+	</div>
+
+
+	<div style="position:absolute;top:118px;left:195px; background:url(s2-1.gif) no-repeat;background-size:100%;width:10px;height:60px;"></div>
+	<div style="position:absolute;top:200px;left:250px; background:url(s5-2.gif) no-repeat;background-size:100%;width:27px;height:60px;"></div>
+	<div style="position:absolute;top:200px;left:120px; background:url(s4-2.gif) no-repeat;background-size:100%;width:27px;height:60px;"></div>
+
+
+	<div id="loadBattery" style="position:absolute;top:70px;left:255px; background:url(s3-0.gif) no-repeat;background-size:100%;width:80px;height:200px;"></div>
+	<div style="position:absolute;top:285px;left:110px; background:url(s6-0.gif) no-repeat;background-size:100%;width:180px;height:60px;"></div>
+	<div style="position:absolute;top:70px;left:65px; background:url(s1-0.gif) no-repeat;background-size:100%;width:80px;height:200px;"></div>
+</div>
+</td>
+</tr>
+<tr>
+<td>hallo</td>
+</tr>
+<script>
+
+function setHomePower ( p ) {
+	var home = document.getElementById("home");
+	home.innerText = p + "W" ;
+}
+
+function setSolarPower ( p ) {
+	var home = document.getElementById("solar");
+	home.innerText = p + "W" ;
+}
+
+function setBatteryPower ( p ) {
+	var home = document.getElementById("battery");
+	home.innerText = p + "W" ;
+}
+
+function setGridPower ( p ) {
+	var home = document.getElementById("grid");
+	home.innerText = p + "W" ;
+}
+
+function setLoadBattery ( p ) {
+	var home = document.getElementById("loadBattery");
+	if (p == 1 ) 
+		home.style.backgroundImage = "url('s3-1.gif')";
+	else 
+		home.style.backgroundImage = "url('s3-0.gif')";
+}
+
+
+setHomePower(100);
+setSolarPower(200);
+setBatteryPower(300);
+setGridPower(400);
+setLoadBattery(1);
+	
+</script>
+
+</body>
+
+</html>
