@@ -13,7 +13,7 @@ use URI::Escape;
 
 eval "use JSON;1" or $missingModul .= "JSON ";
 
-my $version = "0.1";
+my $version = "0.2";
 
 
 ##############################################################
@@ -36,7 +36,8 @@ sub SolaxDirect_Get ($@);
 
 ##############################################################
 
-sub SolaxDirect_Initialize($) {
+sub 
+SolaxDirect_Initialize($) {
 	my ($hash) = @_;
 	
     $hash->{DefFn}      = "SolaxDirect_Define";
@@ -44,17 +45,13 @@ sub SolaxDirect_Initialize($) {
     $hash->{NotifyFn} 	= "SolaxDirect_Notify";
     $hash->{AttrFn}     = "SolaxDirect_Attr";
 	$hash->{GetFn}    = "SolaxDirect_Get";
-    $hash->{AttrList}   = "interval " .
+    $hash->{AttrList}   = "interval port host " .
                           $readingFnAttributes;
 
     foreach my $d(sort keys %{$modules{SolaxDirect}{defptr}}) {
         my $hash = $modules{SolaxDirect}{defptr}{$d};
         $hash->{SolaxDirect}{version} = $version;
     }
-	
-	
-	
-	
 }
 
 sub
@@ -96,36 +93,40 @@ END_TXT
 
 
 
-sub SolaxDirect_Define($$){
-    my ( $hash, $def ) = @_;
-    my @a = split( "[ \t]+", $def );
-    my $name = $a[0];
+sub 
+SolaxDirect_Define($$){
+	my ( $hash, $def ) = @_;
 
-    return "too few parameters: define <NAME> SolaxDirect" if( @a < 1 ) ;
+	my @a = split("[ \t][ \t]*", $def);
+  	my $usg = "\nUse 'define <name> SolaxDirect <ip|fqdn> [<PORT>]'";
+	return "Wrong syntax: $usg" if(int(@a) < 3);
+    
     return "Cannot define SolaxDirect device. Perl modul $missingModul is missing." if ( $missingModul );
+
+	my $name  = $a[0];
+  	my $host  = $a[2];
+  	my $port  = $a[3] if defined $a[3];
+  	$port = 80  if !defined $port;
+
+	Log3 "SolaxDirect", 3, "Creating device <".$name."> at host=<".$host.":".$port.">";
 
     %$hash = (%$hash,
         NOTIFYDEV => "global,$name",
         SolaxDirect     => { 
             CONNECTED   			=> 0,
             version     			=> $version,
-			battery_power		=> 0,
-			battery_temperature		=> 0,
-			battery_charge => 0,
-            interval    			=> 60,
             expires 				=> time(),
         },
     );
 	
 	$attr{$name}{room} = "SolaxDirect" if( !defined( $attr{$name}{room} ) );
+	$attr{$name}{host} = $host;
+	$attr{$name}{port} = $port;
+	$attr{$name}{interval} = 60;
 	
 	SolaxDirect_CONNECTED($hash,'initialized');
-
-	
-	#SolaxDirect_FetchDataFromInverter ( $hash);
 	
 	return undef;
-
 }
 
 
@@ -156,7 +157,7 @@ sub SolaxDirect_Notify($$) {
 	        or grep /^DEFINED.$name$/,@{$events}
 	        or grep /^MODIFIED.$name$/,@{$events}
 	    ) {
-			Log3 $name, 3, "SolaxDirect: " . "notify trigger update"; 
+			#Log3 $name, 3, "SolaxDirect: " . "notify trigger update"; 
 	        SolaxDirect_FetchDataFromInverter($hash);
 	    }
 	} 
@@ -180,7 +181,8 @@ sub SolaxDirect_Notify($$) {
 }
 
 
-sub SolaxDirect_Attr(@) {
+sub 
+SolaxDirect_Attr(@) {
 	
     my ( $cmd, $name, $attrName, $attrVal ) = @_;
     my $hash = $defs{$name};
@@ -206,73 +208,69 @@ sub SolaxDirect_Attr(@) {
         if( $cmd eq "set" ) {
             RemoveInternalTimer($hash);
             return "Interval must be greater than 0"  unless($attrVal > 0);
-            $hash->{SolaxDirect}->{interval} = $attrVal;
+			$attr{$name}{interval} = $attrVal;
             Log3 $name, 5, "$name - set interval: $attrVal";
         }
-
         elsif( $cmd eq "del" ) {
             RemoveInternalTimer($hash);
-            $hash->{SolaxDirect}->{interval}   = 300;
-            Log3 $name, 5, "$name - deleted interval and set to default: 300";
+			$attr{$name}{interval} = 60;
+            Log3 $name, 5, "$name - deleted interval and set to default: 60";
         }
     }
 
-	
-	
-	
+	elsif( $attrName eq "host" ) {
+        if( $cmd eq "set" ) {
+            $attr{$name}{host} = $attrVal;
+            Log3 $name, 5, "$name - set <host>: $attrVal";
+        }
+		elsif( $cmd eq "del" ) {
+            $attr{$name}{host}   = "11.11.11.1";
+            Log3 $name, 5, "$name - deleted <host> and set to default: 11.11.11.1";
+        }
+    }
+
+	elsif( $attrName eq "port" ) {
+        if( $cmd eq "set" ) {
+            $attr{$name}{port} = $attrVal;
+            Log3 $name, 5, "$name - set <port>: $attrVal";
+        }
+		elsif( $cmd eq "del" ) {
+            $attr{$name}{port}   = 80;
+            Log3 $name, 5, "$name - deleted <port> and set to default: 80";
+        }
+    }
+
     return undef;
 }
 
 
-sub SolaxDirect_Undef($$){
+sub 
+SolaxDirect_Undef($$){
 	my ( $hash, $arg )  = @_;
     my $name            = $hash->{NAME};
     my $deviceId        = $hash->{DEVICEID};
-    delete $modules{SolaxDirect}{defptr}{$deviceId};
+    delete $modules{$name}{defptr}{$deviceId};
     RemoveInternalTimer($hash);
     return undef;
 }
 
 
-sub SolaxDirect_Set($@){
-	my ($hash,@a) = @_;
-    return "\"set $hash->{NAME}\" needs at least an argument" if ( @a < 2 );
-    my ($name,$setName,$setVal,$setVal2,$setVal3) = @a;
-
-	Log3 $name, 3, "$name: set called with $setName " . ($setVal ? $setVal : "") if ($setName ne "?");
-
-	if (SolaxDirect_CONNECTED($hash) eq 'disabled' && $setName !~ /clear/) {
-        return "Unknown argument $setName, choose one of clear:all,readings";
-        Log3 $name, 3, "$name: set called with $setName but device is disabled!" if ($setName ne "?");
-        return undef;
-    }
-
-    if ($setName !~ /start|stop|park|update/) {
-        return "Unknown argument $setName, choose one of start stop park update";
-	}
-	
-	if ($setName eq 'update') {
-        RemoveInternalTimer($hash);
-        #SolaxDirect_DoUpdate($hash);
-    }
-    
-	
-	
-    return undef;
-
-}
 
 
 
-sub SolaxDirect_FetchDataFromInverter($) {
+
+sub 
+SolaxDirect_FetchDataFromInverter($) {
     my ($hash, $def) = @_;
     my $name = $hash->{NAME};
     
-	Log3 $name, 3, "SolaxDirect: " . "fetchData $name"; 
+	my $url = "http://" . AttrVal($name, "host", "11.11.11.1") . ":" . AttrVal($name, "port", "80") . "/api/realTimeData.htm";
+
+	#Log3 $name, 3, "SolaxDirect: " . "fetchData $name"; 
 	
     my $header = "Content-Type: application/json\r\nAccept: application/json";
     my ($err, $data) = HttpUtils_BlockingGet({
-        url        	=> "http://11.11.11.1/api/realTimeData.htm",
+        url        	=> $url,
         timeout    	=> 10,
         hash       	=> $hash,
         method     	=> "GET",
@@ -284,28 +282,25 @@ sub SolaxDirect_FetchDataFromInverter($) {
 	
 	SolaxDirect_FetchDataFromInverterResponse( {hash=>$hash},$err,$data );
 
-	Log3 $name, 3, "SolaxDirect: " . "prepare next step"; 
-	InternalTimer( time() + $hash->{SolaxDirect}->{interval}, "SolaxDirect_FetchDataFromInverter", $hash, 0 );
-	Log3 $name, 3, "SolaxDirect: " . "next step done";
-
+	InternalTimer( time() + AttrVal($name, "interval", "60"), "SolaxDirect_FetchDataFromInverter", $hash, 0 );
 
 	return undef;
 	
 }
 
 
-sub SolaxDirect_FetchDataFromInverterResponse($) {
+sub 
+SolaxDirect_FetchDataFromInverterResponse($) {
     my ($param, $err, $data) = @_;
     my $hash = $param->{hash};
     my $name = $hash->{NAME};
 
-	Log3 $name, 3, "SolaxDirect: " . "fetchDataResp $name"; 
+	#Log3 $name, 3, "SolaxDirect: " . "fetchDataResp $name"; 
 	
     if($err ne "") 
 	{
         Log3 $name, 3, "error while requesting ".$param->{url}." - $err";    
 		SolaxDirect_CONNECTED($hash,'error');	
-		Log3 $name, 3, "error processing done";    
     } 
 	elsif($data ne "") 
 	{
@@ -314,8 +309,7 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 
 		my $result = decode_json($data);
 	   
-	        #Log3 $name, 3, "SolaxDirect: " . "$data"; 
-			
+        #Log3 $name, 3, "SolaxDirect: " . "$data"; 
 			
 		$hash->{SolaxDirect}->{pv_pv1_current} = $result->{Data}[0];
 		$hash->{SolaxDirect}->{pv_pv2_current} = $result->{Data}[1];
@@ -324,8 +318,6 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 		$hash->{SolaxDirect}->{pv_pv1_power} = $result->{Data}[11];
 		$hash->{SolaxDirect}->{pv_pv2_power} = $result->{Data}[12];
 		$hash->{SolaxDirect}->{pv_total_power} = $result->{Data}[11] + $result->{Data}[12];
-		
-		
 	
 		$hash->{SolaxDirect}->{grid_output_current} = $result->{Data}[4];
 		$hash->{SolaxDirect}->{grid_network_voltage} = $result->{Data}[5];
@@ -334,7 +326,6 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 		$hash->{SolaxDirect}->{grid_frequency} = $result->{Data}[50];
 		$hash->{SolaxDirect}->{grid_exported} = $result->{Data}[41];
 		$hash->{SolaxDirect}->{grid_imported} = $result->{Data}[42];
-		
 		
 		$hash->{SolaxDirect}->{battery_voltage} = $result->{Data}[13];
 		$hash->{SolaxDirect}->{battery_power} = $result->{Data}[15];
@@ -383,11 +374,8 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 		readingsEndUpdate($hash, 1);
 
 		SolaxDirect_CONNECTED($hash,'OK');    
-		Log3 $name, 3, "SolaxDirect: " . "data updated"; 
+		#Log3 $name, 3, "SolaxDirect: " . "data updated"; 
     }
-	
-	
-	#Log3 $name, 3, "SolaxDirect: " . "done"; 
 	
 	return undef;
 }
@@ -395,17 +383,18 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 
 
 
-sub SolaxDirect_CONNECTED($@) {
+sub 
+SolaxDirect_CONNECTED($@) {
 	my ($hash,$set) = @_;
 	my $name = $hash->{NAME};
-	Log3 $name, 3, "SolaxDirect_CONNECTED => ".$set;    
+	#Log3 $name, 3, "SolaxDirect_CONNECTED => ".$set;    
     if ($set) {
 	  $hash->{SolaxDirect}->{CONNECTED} = $set;
        RemoveInternalTimer($hash);
        %{$hash->{updateDispatch}} = ();
        if (!defined($hash->{READINGS}->{state}->{VAL}) || $hash->{READINGS}->{state}->{VAL} ne $set) {
        		readingsSingleUpdate($hash,"state",$set,1);
-			Log3 $name, 3, "SolaxDirect_CONNECTED singleUpdate ".$set;    
+			#Log3 $name, 3, "SolaxDirect_CONNECTED singleUpdate ".$set;    
        }
 	   return undef;
 	} else {
