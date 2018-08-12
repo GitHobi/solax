@@ -147,7 +147,7 @@ sub SolaxDirect_Notify($$) {
     
     $hash->{SolaxDirect}->{updateStartTime} = time();    
     
-	Log3 $name, 3, "SolaxDirect: " . "notify $devtype"; 
+	#Log3 $name, 3, "SolaxDirect: " . "notify $devtype"; 
 	
     if ( $devtype eq 'Global') {
 	    if (
@@ -268,20 +268,27 @@ sub SolaxDirect_FetchDataFromInverter($) {
     my ($hash, $def) = @_;
     my $name = $hash->{NAME};
     
-	#Log3 $name, 3, "SolaxDirect: " . "fetchData $name"; 
+	Log3 $name, 3, "SolaxDirect: " . "fetchData $name"; 
 	
     my $header = "Content-Type: application/json\r\nAccept: application/json";
-    HttpUtils_NonblockingGet({
+    my ($err, $data) = HttpUtils_BlockingGet({
         url        	=> "http://11.11.11.1/api/realTimeData.htm",
-        timeout    	=> 120,
+        timeout    	=> 10,
         hash       	=> $hash,
         method     	=> "GET",
         header     	=> $header, 		
         callback   	=> \&SolaxDirect_FetchDataFromInverterResponse,
     });  
     
-	SolaxDirect_CONNECTED($hash,'OK');
+	SolaxDirect_CONNECTED($hash,'Fetching');
 	
+	SolaxDirect_FetchDataFromInverterResponse( {hash=>$hash},$err,$data );
+
+	Log3 $name, 3, "SolaxDirect: " . "prepare next step"; 
+	InternalTimer( time() + $hash->{SolaxDirect}->{interval}, "SolaxDirect_FetchDataFromInverter", $hash, 0 );
+	Log3 $name, 3, "SolaxDirect: " . "next step done";
+
+
 	return undef;
 	
 }
@@ -292,13 +299,16 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
     my $hash = $param->{hash};
     my $name = $hash->{NAME};
 
-	#Log3 $name, 3, "SolaxDirect: " . "fetchDataResp $name"; 
+	Log3 $name, 3, "SolaxDirect: " . "fetchDataResp $name"; 
 	
-    if($err ne "") {
-        Log3 $name, 3, "error while requesting ".$param->{url}." - $err";     
-    } elsif($data ne "") {
-	    
-		
+    if($err ne "") 
+	{
+        Log3 $name, 3, "error while requesting ".$param->{url}." - $err";    
+		SolaxDirect_CONNECTED($hash,'error');	
+		Log3 $name, 3, "error processing done";    
+    } 
+	elsif($data ne "") 
+	{
 		$data = $data =~ s/,,/,0,/gr;
 		$data = $data =~ s/,,/,0,/gr;
 
@@ -307,77 +317,76 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 	        #Log3 $name, 3, "SolaxDirect: " . "$data"; 
 			
 			
-			$hash->{SolaxDirect}->{pv_pv1_current} = $result->{Data}[0];
-			$hash->{SolaxDirect}->{pv_pv2_current} = $result->{Data}[1];
-			$hash->{SolaxDirect}->{pv_pv1_voltage} = $result->{Data}[2];
-			$hash->{SolaxDirect}->{pv_pv2_voltage} = $result->{Data}[3];
-			$hash->{SolaxDirect}->{pv_pv1_power} = $result->{Data}[11];
-			$hash->{SolaxDirect}->{pv_pv2_power} = $result->{Data}[12];
-			$hash->{SolaxDirect}->{pv_total_power} = $result->{Data}[11] + $result->{Data}[12];
-			
-			
+		$hash->{SolaxDirect}->{pv_pv1_current} = $result->{Data}[0];
+		$hash->{SolaxDirect}->{pv_pv2_current} = $result->{Data}[1];
+		$hash->{SolaxDirect}->{pv_pv1_voltage} = $result->{Data}[2];
+		$hash->{SolaxDirect}->{pv_pv2_voltage} = $result->{Data}[3];
+		$hash->{SolaxDirect}->{pv_pv1_power} = $result->{Data}[11];
+		$hash->{SolaxDirect}->{pv_pv2_power} = $result->{Data}[12];
+		$hash->{SolaxDirect}->{pv_total_power} = $result->{Data}[11] + $result->{Data}[12];
 		
-			$hash->{SolaxDirect}->{grid_output_current} = $result->{Data}[4];
-			$hash->{SolaxDirect}->{grid_network_voltage} = $result->{Data}[5];
-			$hash->{SolaxDirect}->{grid_power} = $result->{Data}[6];
-			$hash->{SolaxDirect}->{grid_feed_in_power} = $result->{Data}[10];
-			$hash->{SolaxDirect}->{grid_frequency} = $result->{Data}[50];
-			$hash->{SolaxDirect}->{grid_exported} = $result->{Data}[41];
-			$hash->{SolaxDirect}->{grid_imported} = $result->{Data}[42];
-			
-			
-			$hash->{SolaxDirect}->{battery_voltage} = $result->{Data}[13];
-			$hash->{SolaxDirect}->{battery_power} = $result->{Data}[15];
-			$hash->{SolaxDirect}->{battery_temperature} = $result->{Data}[16];
-			$hash->{SolaxDirect}->{battery_charge} = $result->{Data}[14];
-			$hash->{SolaxDirect}->{battery_remain_capacity} = $result->{Data}[17];
-			
-			$hash->{SolaxDirect}->{inverter_yield_today} = $result->{Data}[8];
-			$hash->{SolaxDirect}->{inverter_yield_month} = $result->{Data}[9];
-			$hash->{SolaxDirect}->{battery_yield_total} = $result->{Data}[19];
-			
-			$hash->{SolaxDirect}->{home_power} = $hash->{SolaxDirect}->{grid_power} - $hash->{SolaxDirect}->{grid_feed_in_power} ;
-			
-			
-			# set Readings	
-			readingsBeginUpdate($hash);
-			
-			readingsBulkUpdate($hash,'pv_pv1_current',$hash->{SolaxDirect}->{pv_pv1_current} );
-			readingsBulkUpdate($hash,'pv_pv2_current',$hash->{SolaxDirect}->{pv_pv2_current} );
-			readingsBulkUpdate($hash,'pv_pv1_voltage',$hash->{SolaxDirect}->{pv_pv1_voltage} );
-			readingsBulkUpdate($hash,'pv_pv2_voltage',$hash->{SolaxDirect}->{pv_pv2_voltage} );
-			readingsBulkUpdate($hash,'pv_pv1_power',$hash->{SolaxDirect}->{pv_pv1_power} );
-			readingsBulkUpdate($hash,'pv_pv2_power',$hash->{SolaxDirect}->{pv_pv2_power} );
-			readingsBulkUpdate($hash,'pv_total_power',$hash->{SolaxDirect}->{pv_total_power} );
-			
-			readingsBulkUpdate($hash,'battery_power',$hash->{SolaxDirect}->{battery_power} );
-			readingsBulkUpdate($hash,'battery_temperature',$hash->{SolaxDirect}->{battery_temperature} );
-			readingsBulkUpdate($hash,'battery_charge',$hash->{SolaxDirect}->{battery_charge} );
-			readingsBulkUpdate($hash,'battery_voltage',$hash->{SolaxDirect}->{battery_voltage} );
-			readingsBulkUpdate($hash,'battery_remain_capacity',$hash->{SolaxDirect}->{battery_remain_capacity} );
-			
-			readingsBulkUpdate($hash,'inverter_yield_today',$hash->{SolaxDirect}->{inverter_yield_today} );
-			readingsBulkUpdate($hash,'inverter_yield_month',$hash->{SolaxDirect}->{inverter_yield_month} );
-			readingsBulkUpdate($hash,'battery_yield_total',$hash->{SolaxDirect}->{battery_yield_total} );
-			
-			readingsBulkUpdate($hash,'grid_output_current',$hash->{SolaxDirect}->{grid_output_current} );
-			readingsBulkUpdate($hash,'grid_network_voltage',$hash->{SolaxDirect}->{grid_network_voltage} );
-			readingsBulkUpdate($hash,'grid_power',$hash->{SolaxDirect}->{grid_power} );
-			readingsBulkUpdate($hash,'grid_feed_in_power',$hash->{SolaxDirect}->{grid_feed_in_power} );
-			readingsBulkUpdate($hash,'grid_frequency',$hash->{SolaxDirect}->{grid_frequency} );
-			readingsBulkUpdate($hash,'grid_exported',$hash->{SolaxDirect}->{grid_exported} );
-			readingsBulkUpdate($hash,'grid_imported',$hash->{SolaxDirect}->{grid_imported} );
-			
-			readingsBulkUpdate($hash,'home_power',$hash->{SolaxDirect}->{home_power} );
-			
-			readingsEndUpdate($hash, 1);
-			
-			#Log3 $name, 3, "SolaxDirect: " . "data updated"; 
-	    
+		
+	
+		$hash->{SolaxDirect}->{grid_output_current} = $result->{Data}[4];
+		$hash->{SolaxDirect}->{grid_network_voltage} = $result->{Data}[5];
+		$hash->{SolaxDirect}->{grid_power} = $result->{Data}[6];
+		$hash->{SolaxDirect}->{grid_feed_in_power} = $result->{Data}[10];
+		$hash->{SolaxDirect}->{grid_frequency} = $result->{Data}[50];
+		$hash->{SolaxDirect}->{grid_exported} = $result->{Data}[41];
+		$hash->{SolaxDirect}->{grid_imported} = $result->{Data}[42];
+		
+		
+		$hash->{SolaxDirect}->{battery_voltage} = $result->{Data}[13];
+		$hash->{SolaxDirect}->{battery_power} = $result->{Data}[15];
+		$hash->{SolaxDirect}->{battery_temperature} = $result->{Data}[16];
+		$hash->{SolaxDirect}->{battery_charge} = $result->{Data}[14];
+		$hash->{SolaxDirect}->{battery_remain_capacity} = $result->{Data}[17];
+		
+		$hash->{SolaxDirect}->{inverter_yield_today} = $result->{Data}[8];
+		$hash->{SolaxDirect}->{inverter_yield_month} = $result->{Data}[9];
+		$hash->{SolaxDirect}->{battery_yield_total} = $result->{Data}[19];
+		
+		$hash->{SolaxDirect}->{home_power} = $hash->{SolaxDirect}->{grid_power} - $hash->{SolaxDirect}->{grid_feed_in_power} ;
+		
+		
+		# set Readings	
+		readingsBeginUpdate($hash);
+		
+		readingsBulkUpdate($hash,'pv_pv1_current',$hash->{SolaxDirect}->{pv_pv1_current} );
+		readingsBulkUpdate($hash,'pv_pv2_current',$hash->{SolaxDirect}->{pv_pv2_current} );
+		readingsBulkUpdate($hash,'pv_pv1_voltage',$hash->{SolaxDirect}->{pv_pv1_voltage} );
+		readingsBulkUpdate($hash,'pv_pv2_voltage',$hash->{SolaxDirect}->{pv_pv2_voltage} );
+		readingsBulkUpdate($hash,'pv_pv1_power',$hash->{SolaxDirect}->{pv_pv1_power} );
+		readingsBulkUpdate($hash,'pv_pv2_power',$hash->{SolaxDirect}->{pv_pv2_power} );
+		readingsBulkUpdate($hash,'pv_total_power',$hash->{SolaxDirect}->{pv_total_power} );
+		
+		readingsBulkUpdate($hash,'battery_power',$hash->{SolaxDirect}->{battery_power} );
+		readingsBulkUpdate($hash,'battery_temperature',$hash->{SolaxDirect}->{battery_temperature} );
+		readingsBulkUpdate($hash,'battery_charge',$hash->{SolaxDirect}->{battery_charge} );
+		readingsBulkUpdate($hash,'battery_voltage',$hash->{SolaxDirect}->{battery_voltage} );
+		readingsBulkUpdate($hash,'battery_remain_capacity',$hash->{SolaxDirect}->{battery_remain_capacity} );
+		
+		readingsBulkUpdate($hash,'inverter_yield_today',$hash->{SolaxDirect}->{inverter_yield_today} );
+		readingsBulkUpdate($hash,'inverter_yield_month',$hash->{SolaxDirect}->{inverter_yield_month} );
+		readingsBulkUpdate($hash,'battery_yield_total',$hash->{SolaxDirect}->{battery_yield_total} );
+		
+		readingsBulkUpdate($hash,'grid_output_current',$hash->{SolaxDirect}->{grid_output_current} );
+		readingsBulkUpdate($hash,'grid_network_voltage',$hash->{SolaxDirect}->{grid_network_voltage} );
+		readingsBulkUpdate($hash,'grid_power',$hash->{SolaxDirect}->{grid_power} );
+		readingsBulkUpdate($hash,'grid_feed_in_power',$hash->{SolaxDirect}->{grid_feed_in_power} );
+		readingsBulkUpdate($hash,'grid_frequency',$hash->{SolaxDirect}->{grid_frequency} );
+		readingsBulkUpdate($hash,'grid_exported',$hash->{SolaxDirect}->{grid_exported} );
+		readingsBulkUpdate($hash,'grid_imported',$hash->{SolaxDirect}->{grid_imported} );
+		
+		readingsBulkUpdate($hash,'home_power',$hash->{SolaxDirect}->{home_power} );
+		
+		readingsEndUpdate($hash, 1);
+
+		SolaxDirect_CONNECTED($hash,'OK');    
+		Log3 $name, 3, "SolaxDirect: " . "data updated"; 
     }
 	
-	InternalTimer( time() + $hash->{SolaxDirect}->{interval}, "SolaxDirect_FetchDataFromInverter", $hash, 0 );
-
+	
 	#Log3 $name, 3, "SolaxDirect: " . "done"; 
 	
 	return undef;
@@ -388,12 +397,15 @@ sub SolaxDirect_FetchDataFromInverterResponse($) {
 
 sub SolaxDirect_CONNECTED($@) {
 	my ($hash,$set) = @_;
+	my $name = $hash->{NAME};
+	Log3 $name, 3, "SolaxDirect_CONNECTED => ".$set;    
     if ($set) {
 	  $hash->{SolaxDirect}->{CONNECTED} = $set;
        RemoveInternalTimer($hash);
        %{$hash->{updateDispatch}} = ();
        if (!defined($hash->{READINGS}->{state}->{VAL}) || $hash->{READINGS}->{state}->{VAL} ne $set) {
        		readingsSingleUpdate($hash,"state",$set,1);
+			Log3 $name, 3, "SolaxDirect_CONNECTED singleUpdate ".$set;    
        }
 	   return undef;
 	} else {
